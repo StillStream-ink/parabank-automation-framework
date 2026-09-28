@@ -1,0 +1,8 @@
+pytest
+requests
+python-dotenv
+allure-pytest
+psycopg2-binary
+playwright
+python-dotenv
+
