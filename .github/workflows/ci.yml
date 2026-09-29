@@ -1,0 +1,123 @@
+name: ParaBank CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      # ========== 1. 检出代码 ==========
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ========== 2. 设置 JDK 21 ==========
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+          cache: 'maven'
+
+      # ========== 3. 设置 Python 3.11 ==========
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      # ========== 4. 安装 Python 依赖 ==========
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          python -m playwright install chromium --with-deps
+
+      # ========== 5. 构建 ParaBank ==========
+      - name: Build ParaBank
+        run: |
+          git clone https://github.com/parasoft/parabank.git /tmp/parabank
+          cd /tmp/parabank
+          mvn clean package -DskipTests -q
+
+      # ========== 6. 启动 ParaBank ==========
+      - name: Start ParaBank
+        run: |
+          cd /tmp/parabank
+          nohup mvn cargo:run > parabank.log 2>&1 &
+          echo "ParaBank 启动中..."
+
+      # ========== 7. 等待 ParaBank 就绪 ==========
+      - name: Wait for ParaBank
+        run: |
+          for i in {1..30}; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" -u john:demo \
+              "http://localhost:8080/parabank/services/bank/customers/12212/accounts" || true)
+            if [ "$code" = "200" ]; then
+              echo "ParaBank 已就绪 (尝试 $i)"
+              exit 0
+            fi
+            echo "等待中... ($i/30)"
+            sleep 2
+          done
+          echo "ParaBank 启动超时"
+          cat parabank.log
+          exit 1
+
+      # ========== 8. 重置测试数据 ==========
+      - name: Reset test data
+        run: python scripts/reset_parabank.py --quiet
+
+      # ========== 8.5 设置 CI 环境 ==========
+      - name: Setup CI env
+        run: cp .env.ci .env
+
+      # ========== 9. 运行测试 ==========
+      - name: Run tests
+        run: pytest tests -q --alluredir=allure-results
+
+      # ========== 10. 加载 Allure 历史 ==========
+      - name: Load Allure history
+        if: always()
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      # ========== 11. 生成 Allure 报告 ==========
+      - name: Generate Allure report
+        if: always()
+        uses: simple-elf/allure-report-action@v1.15
+        with:
+          gh_pages: gh-pages
+          allure_history: allure-history
+          allure_results: allure-results
+
+      # ========== 12. 部署到 GitHub Pages ==========
+      - name: Deploy to GitHub Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: allure-history
+
+      # ========== 13. 上传测试产物 ==========
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            allure-results/
+            test-results/
+          retention-days: 30
