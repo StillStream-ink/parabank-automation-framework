@@ -1,8 +1,31 @@
-pytest
-requests
-python-dotenv
-allure-pytest
-psycopg2-binary
-playwright
-python-dotenv
+# ==================== 测试框架 ====================
+pytest==7.4.4
+pytest-playwright==0.4.3
+pytest-xdist==3.6.1
+pytest-order==1.5.0
+pytest-base-url==2.1.0
 
+# ==================== 报告 ====================
+allure-pytest==2.13.2
+pytest-html==4.1.1
+pytest-json-report==1.5.0
+pytest-metadata==3.1.1
+pytest-cov==7.1.0
+
+# ==================== 接口测试 ====================
+requests==2.31.0
+tenacity==9.1.4
+
+# ==================== 契约校验 ====================
+pydantic==2.13.5
+jsonschema==4.26.0
+
+# ==================== UI 自动化 ====================
+playwright==1.40.0
+
+# ==================== 数据生成 ====================
+Faker==40.39.0
+
+# ==================== 环境配置 ====================
+python-dotenv==1.0.0
+PyYAML==6.0.3
