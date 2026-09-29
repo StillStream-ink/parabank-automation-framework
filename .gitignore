@@ -1,4 +1,4 @@
-﻿# ====== Python ======
+# ====== Python ======
 __pycache__/
 *.py[cod]
 *$py.class
@@ -51,3 +51,8 @@ tests_backup_gbk/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+test-results/
+
+# ====== 备份包 ======
+*.zip

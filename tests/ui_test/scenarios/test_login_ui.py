@@ -2,9 +2,12 @@ import allure
 import pytest
 from tests.ui_test.pages.login_page import LoginPage
 
+pytestmark = [pytest.mark.ui, pytest.mark.login]
+
 @allure.epic("ParaBank 银行系统")
 @allure.feature("登录模块")
 class TestLoginUI:
+    @pytest.mark.smoke
     @allure.story("正常登录")
     @allure.title("TC_Login_001: 正确账号密码登录成功")
     @allure.severity(allure.severity_level.BLOCKER)

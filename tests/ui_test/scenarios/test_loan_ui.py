@@ -1,7 +1,9 @@
-﻿import allure
+import allure
 import pytest
 from tests.ui_test.pages.loan_page import LoanPage
 
+
+pytestmark = [pytest.mark.ui, pytest.mark.loan]
 
 @allure.epic("ParaBank 银行系统")
 @allure.feature("贷款申请模块")

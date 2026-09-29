@@ -1,4 +1,4 @@
-﻿import pytest
+import pytest
 import allure
 import xml.etree.ElementTree as ET
 from tests.api_test.business.parabank_biz import ParaBankBiz
@@ -7,9 +7,12 @@ BASE_URL = "http://localhost:8080/parabank/services/bank"
 USER_JOHN = ("john", "demo")
 CUSTOMER_ID_JOHN = "12212"
 
+pytestmark = [pytest.mark.api, pytest.mark.parabank, pytest.mark.transfer]
+
 @allure.feature("ParaBank-REST接口测试")
 class TestParaBankAPI:
     # ================== 账户查询 ==================
+    @pytest.mark.smoke
     @allure.story("账户模块-查询本人账户列表")
     @allure.title("TC_PB_ACC_001 查询本人账户列表")
     def test_get_self_account_list(self):
@@ -56,6 +59,7 @@ class TestParaBankAPI:
         assert resp.status_code == 200
 
     # ================== 转账 ==================
+    @pytest.mark.smoke
     @allure.story("转账-正常转账")
     @allure.title("TC_PB_TX_001 本人账户之间正常金额转账")
     def test_transfer_funds_normal(self):

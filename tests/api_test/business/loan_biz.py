@@ -1,4 +1,4 @@
-﻿from tests.api_test.services.base_api import BaseApi
+from tests.api_test.services.base_api import BaseApi
 
 class LoanBiz:
     def __init__(self, client: BaseApi):

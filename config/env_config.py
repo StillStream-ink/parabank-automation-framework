@@ -1,4 +1,4 @@
-﻿from dotenv import load_dotenv
+from dotenv import load_dotenv
 import os
 
 # 获取当前文件的上级目录（项目根目录）

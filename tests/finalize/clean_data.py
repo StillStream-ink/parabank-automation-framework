@@ -1,4 +1,4 @@
-﻿"""ParaBank 测试数据清理。
+"""ParaBank 测试数据清理。
 
 核心策略：调用官方 /initializeDB 接口，将数据库重置为初始状态。
 """

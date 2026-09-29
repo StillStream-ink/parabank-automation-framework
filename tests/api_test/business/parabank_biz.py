@@ -1,4 +1,27 @@
+import json
+
+import allure
 import requests
+
+
+
+
+def _attach_to_allure(resp):
+    """把请求/响应记录到 Allure 报告。"""
+    try:
+        req = resp.request
+        req_info = f"{req.method} {req.url}"
+        if req.body:
+            body = req.body if isinstance(req.body, str) else str(req.body)
+            req_info += f"\n\n{body[:2000]}"
+        allure.attach(req_info, name="请求", attachment_type=allure.attachment_type.TEXT)
+
+        resp_info = f"HTTP {resp.status_code}"
+        if resp.text:
+            resp_info += f"\n\n{resp.text[:3000]}"
+        allure.attach(resp_info, name="响应", attachment_type=allure.attachment_type.TEXT)
+    except Exception:
+        pass
 
 
 class ParaBankBiz:
@@ -11,6 +34,13 @@ class ParaBankBiz:
         self.base_url = base_url.rstrip("/")
         self.auth = auth
         self.session = requests.Session()
+        # 让所有请求自动记录到 Allure
+        _orig_request = self.session.request
+        def _wrapped(method, url, **kwargs):
+            resp = _orig_request(method, url, **kwargs)
+            _attach_to_allure(resp)
+            return resp
+        self.session.request = _wrapped
 
     # ==================== 底层 ====================
 

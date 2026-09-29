@@ -4,9 +4,12 @@ from tests.ui_test.pages.transfer_page import TransferPage
 
 BASE_URL = "http://localhost:8080/parabank"
 
+pytestmark = [pytest.mark.ui, pytest.mark.transfer]
+
 @allure.epic("ParaBank 银行系统")
 @allure.feature("转账模块")
 class TestTransferUI:
+    @pytest.mark.smoke
     @allure.story("正常转账")
     @allure.title("TC_Trans_001: 正常金额转账成功")
     @allure.severity(allure.severity_level.BLOCKER)

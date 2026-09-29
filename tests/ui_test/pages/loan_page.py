@@ -1,4 +1,4 @@
-﻿from tests.ui_test.pages.base_page import BasePage
+from tests.ui_test.pages.base_page import BasePage
 
 
 class LoanPage(BasePage):

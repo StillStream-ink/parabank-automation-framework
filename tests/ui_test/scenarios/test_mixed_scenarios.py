@@ -1,0 +1,168 @@
+"""混合场景测试：API 造数据 + UI 验证 / UI 操作 + API 校验。
+
+特点：每个用例都同时用到 ParaBankBiz（API）和 Playwright（UI）。
+"""
+import xml.etree.ElementTree as ET
+from decimal import Decimal
+
+import allure
+import pytest
+
+from tests.api_test.business.parabank_biz import ParaBankBiz
+from tests.ui_test.pages.overview_page import OverviewPage
+
+BASE_URL = "http://localhost:8080/parabank/services/bank"
+USER_JOHN = ("john", "demo")
+CUSTOMER_ID = "12212"
+ACC_A = "54321"
+ACC_B = "12345"
+
+
+def _api_balance(account_id):
+    biz = ParaBankBiz(BASE_URL, USER_JOHN)
+    resp = biz.get_single_account_detail(account_id)
+    assert resp.status_code == 200
+    root = ET.fromstring(resp.text)
+    return Decimal(root.find("balance").text)
+
+
+pytestmark = [pytest.mark.ui, pytest.mark.regression]
+
+@allure.epic("ParaBank银行系统")
+@allure.feature("混合场景-API与UI联动")
+class TestMixedScenarios:
+
+    # ==================== 场景 1：API 操作 + UI 验证 ====================
+
+    @pytest.mark.smoke
+    @allure.story("API 转账 -> UI 验证余额")
+    @allure.title("TC_MIX_001 API 转账 100 后，UI 应显示新余额")
+    def test_api_transfer_ui_verify(self, logged_in_page, ui_base_url):
+        biz = ParaBankBiz(BASE_URL, USER_JOHN)
+        before = _api_balance(ACC_A)
+
+        # API 发起转账
+        resp = biz.transfer_funds(ACC_A, ACC_B, 100)
+        assert resp.status_code == 200, "API 转账失败"
+
+        after = _api_balance(ACC_A)
+        assert after == before - 100
+
+        # UI 打开 overview，验证页面显示同一余额
+        page = OverviewPage(logged_in_page, ui_base_url)
+        page.navigate()
+        ui_balance = page.get_balance(ACC_A)
+
+        assert ui_balance == after, (
+            f"UI 显示余额 {ui_balance} 与 API 查询结果 {after} 不一致"
+        )
+
+    @allure.story("API 开户 -> UI 验证账户数")
+    @allure.title("TC_MIX_002 API 开新账户后，UI 账户数应 +1")
+    def test_api_open_account_ui_verify(self, logged_in_page, ui_base_url):
+        biz = ParaBankBiz(BASE_URL, USER_JOHN)
+
+        # UI 先打开 overview 数一下初始账户数
+        page = OverviewPage(logged_in_page, ui_base_url)
+        page.navigate()
+        before_count = page.account_count()
+        assert before_count > 0
+
+        # API 开 SAVINGS 账户
+        resp = biz.open_new_account(CUSTOMER_ID, account_type=1, from_account_id=ACC_A)
+        assert resp.status_code == 200
+
+        # UI 刷新页面，账户数应 +1
+        page.navigate()
+        after_count = page.account_count()
+        assert after_count == before_count + 1, (
+            f"UI 显示账户数未变化：{before_count} -> {after_count}"
+        )
+
+    # ==================== 场景 2：UI 操作 + API 验证 ====================
+
+    @allure.story("UI 转账 -> API 验证余额")
+    @allure.title("TC_MIX_003 UI 转账后，API 查询应反映余额变化")
+    def test_ui_transfer_api_verify(self, logged_in_page, ui_base_url):
+        biz = ParaBankBiz(BASE_URL, USER_JOHN)
+        before_a = _api_balance(ACC_A)
+        before_b = _api_balance(ACC_B)
+
+        # UI 打开转账页
+        logged_in_page.goto(f"{ui_base_url}/transfer.htm")
+        logged_in_page.wait_for_load_state("networkidle")
+        logged_in_page.fill("input#amount", "100")
+        logged_in_page.locator("select#fromAccountId").select_option(ACC_A)
+        logged_in_page.locator("select#toAccountId").select_option(ACC_B)
+        logged_in_page.click("input[value='Transfer']")
+        logged_in_page.wait_for_load_state("networkidle")
+
+        # UI 上应有成功提示
+        body = logged_in_page.locator("body").inner_text()
+        assert "Transfer Complete" in body or "successfully" in body.lower(), (
+            f"UI 转账未显示成功：{body[:200]}"
+        )
+
+        # API 校验余额
+        after_a = _api_balance(ACC_A)
+        after_b = _api_balance(ACC_B)
+        assert after_a == before_a - 100, f"转出方余额未减少：{before_a} -> {after_a}"
+        assert after_b == before_b + 100, f"接收方余额未增加：{before_b} -> {after_b}"
+
+    @allure.story("UI 开户 -> API 验证账户列表")
+    @allure.title("TC_MIX_004 UI 开新账户后，API 查询应返回新账户")
+    def test_ui_open_account_api_verify(self, logged_in_page, ui_base_url):
+        biz = ParaBankBiz(BASE_URL, USER_JOHN)
+
+        # API 先记录初始账户 ID 集合
+        resp = biz.get_customer_account_list(CUSTOMER_ID)
+        root = ET.fromstring(resp.text)
+        before_ids = {acc.find("id").text for acc in root.findall("account")}
+
+        # UI 开户（SAVINGS）
+        logged_in_page.goto(f"{ui_base_url}/openaccount.htm")
+        logged_in_page.wait_for_load_state("networkidle")
+        logged_in_page.locator("select#type").select_option("1")  # SAVINGS
+        logged_in_page.locator("select#fromAccountId").select_option(ACC_A)
+        logged_in_page.click("input[value='Open New Account']")
+        logged_in_page.wait_for_load_state("networkidle")
+
+        # API 重新查询，账户列表应多 1 个
+        resp2 = biz.get_customer_account_list(CUSTOMER_ID)
+        root2 = ET.fromstring(resp2.text)
+        after_ids = {acc.find("id").text for acc in root2.findall("account")}
+
+        new_ids = after_ids - before_ids
+        assert len(new_ids) == 1, (
+            f"预期新增 1 个账户，实际新增 {len(new_ids)} 个：{new_ids}"
+        )
+
+    # ==================== 场景 3：三段式端到端 ====================
+
+    @allure.story("端到端：API 造数据 -> UI 走流程 -> API 校验")
+    @allure.title("TC_MIX_005 API 存款 -> UI 转账 -> API 校验最终余额")
+    def test_e2e_three_stage(self, logged_in_page, ui_base_url):
+        biz = ParaBankBiz(BASE_URL, USER_JOHN)
+
+        # 阶段 1：API 存 500 到 54321，确保后续转账有余额
+        # 说明：这里不断言"余额 >= 500"全量跑时前面用例可能已把余额搞成负数
+        # 存款本身必然成功（无下限），记录存款后的实际余额即可
+        resp = biz.deposit(ACC_A, 500)
+        assert resp.status_code == 200
+
+        stage1_balance = _api_balance(ACC_A)
+
+        # 阶段 2：UI 转账 200 给 12345
+        logged_in_page.goto(f"{ui_base_url}/transfer.htm")
+        logged_in_page.wait_for_load_state("networkidle")
+        logged_in_page.fill("input#amount", "200")
+        logged_in_page.locator("select#fromAccountId").select_option(ACC_A)
+        logged_in_page.locator("select#toAccountId").select_option(ACC_B)
+        logged_in_page.click("input[value='Transfer']")
+        logged_in_page.wait_for_load_state("networkidle")
+
+        # 阶段 3：API 校验最终余额（精确到分）
+        final_balance = _api_balance(ACC_A)
+        assert final_balance == stage1_balance - 200, (
+            f"最终余额不符：阶段1={stage1_balance}, 阶段3={final_balance}, 预期差 200"
+        )

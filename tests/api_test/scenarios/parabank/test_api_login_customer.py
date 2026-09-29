@@ -1,4 +1,4 @@
-﻿import allure
+import allure
 import pytest
 import xml.etree.ElementTree as ET
 
@@ -9,11 +9,14 @@ USER_JOHN = ("john", "demo")
 CUSTOMER_ID_JOHN = "12212"
 
 
+pytestmark = [pytest.mark.api, pytest.mark.parabank, pytest.mark.login]
+
 @allure.feature("ParaBank-登录/客户信息接口")
 class TestLoginCustomer:
 
     # ==================== 登录 ====================
 
+    @pytest.mark.smoke
     @allure.story("登录-正常")
     @allure.title("TC_PB_LOGIN_001 正确账号密码登录")
     def test_login_success(self):

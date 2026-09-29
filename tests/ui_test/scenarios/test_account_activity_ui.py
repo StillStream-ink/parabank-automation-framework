@@ -1,0 +1,29 @@
+import pytest
+import allure
+from tests.ui_test.pages.account_activity_page import AccountActivityPage
+
+
+pytestmark = [pytest.mark.ui, pytest.mark.regression]
+
+@allure.epic("ParaBank银行系统")
+@allure.feature("账户详情模块")
+class TestAccountActivityUI:
+
+    @allure.story("查看账户详情")
+    @allure.title("TC_UI_ACC_001 查看账户余额")
+    def test_view_account_balance(self, logged_in_page, ui_base_url):
+        page = AccountActivityPage(logged_in_page, ui_base_url)
+        page.navigate("54321")
+        body = page.get_body_text()
+        assert "54321" in body, "页面未显示账户号"
+        assert "Balance:" in body, "页面未显示余额"
+        assert "Available:" in body, "页面未显示可用余额"
+
+    @allure.story("交易筛选")
+    @allure.title("TC_UI_ACC_002 按月份和类型筛选交易")
+    def test_filter_transactions(self, logged_in_page, ui_base_url):
+        page = AccountActivityPage(logged_in_page, ui_base_url)
+        page.navigate("54321")
+        page.filter_by("All", "All")
+        body = page.get_body_text()
+        assert "Account Activity" in body or "Date" in body, "筛选后页面异常"

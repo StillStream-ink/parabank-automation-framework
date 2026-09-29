@@ -1,7 +1,10 @@
+import pytest
 import time
 import allure
 from tests.ui_test.pages.register_page import RegisterPage
 
+
+pytestmark = [pytest.mark.ui, pytest.mark.login]
 
 @allure.epic("ParaBank银行系统")
 @allure.feature("注册模块")

@@ -1,4 +1,4 @@
-﻿import allure
+import allure
 import pytest
 import xml.etree.ElementTree as ET
 
@@ -9,11 +9,14 @@ USER_JOHN = ("john", "demo")
 ACCOUNT_ID = "54321"
 
 
+pytestmark = [pytest.mark.api, pytest.mark.parabank, pytest.mark.deposit, pytest.mark.withdraw]
+
 @allure.feature("ParaBank-存款/取款接口")
 class TestDepositWithdraw:
 
     # ==================== 存款 ====================
 
+    @pytest.mark.smoke
     @allure.story("存款-正常")
     @allure.title("TC_PB_DEP_001 正常存款 100 元")
     def test_deposit_normal(self):
