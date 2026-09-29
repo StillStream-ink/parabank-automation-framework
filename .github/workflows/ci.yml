@@ -27,11 +27,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
           java-version: '21'
-          cache: 'maven'
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
@@ -51,6 +50,14 @@ jobs:
           sudo tar -zxf allure-2.30.0.tgz -C /opt/
           sudo ln -sf /opt/allure-2.30.0/bin/allure /usr/local/bin/allure
           allure --version
+
+      - name: Cache Maven repo
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('.github/workflows/ci.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
 
       - name: Build ParaBank
         run: |
@@ -121,7 +128,7 @@ jobs:
 
   deploy:
     needs: test
-    if: always() && needs.test.result != 'cancelled'
+    if: needs.test.result == 'success'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
