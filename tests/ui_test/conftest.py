@@ -14,9 +14,20 @@ from playwright.sync_api import Page
 
 @pytest.fixture(scope="session")
 def browser_type_launch_args(browser_type_launch_args):
+    """headless 决策：
+    - HEADLESS=1 -> 无头
+    - HEADLESS=0 -> 有头
+    - 未设置 -> 检测 CI 环境（GitHub Actions 自动设 CI=true）-> 无头；本地有头
+    """
+    explicit = os.getenv("HEADLESS")
+    if explicit is not None:
+        headless = explicit == "1"
+    else:
+        headless = os.getenv("CI", "false").lower() == "true"
+
     return {
         **browser_type_launch_args,
-        "headless": os.getenv("HEADLESS", "0") == "1",
+        "headless": headless,
         "slow_mo": int(os.getenv("SLOW_MO", "0")),
     }
 
