@@ -1,4 +1,4 @@
-"""UI 测试 fixtures。
+﻿"""UI 测试 fixtures。
 
 包含：
 - 环境变量控制 headless / slow_mo
@@ -16,7 +16,7 @@ from playwright.sync_api import Page
 def browser_type_launch_args(browser_type_launch_args):
     return {
         **browser_type_launch_args,
-        "headless": os.getenv("HEADLESS", "0") != "0",
+        "headless": os.getenv("HEADLESS", "0") == "1",
         "slow_mo": int(os.getenv("SLOW_MO", "0")),
     }
 
@@ -37,37 +37,49 @@ def page(context, request):
     - 用例开始：tracing.start
     - 用例失败：保存 trace.zip 到 test-results/playwright/ + 附到 Allure
     - 用例成功：丢弃 trace
+    - 无论成败，finally 保证 tracing.stop() 被调用（避免资源泄漏）
     """
     context.tracing.start(screenshots=True, snapshots=True, sources=True)
-    pg = context.new_page()
-    yield pg
+    pg = None
+    try:
+        pg = context.new_page()
+        yield pg
+    finally:
+        # 无论是否异常，都要 stop + close
+        failed = bool(getattr(request.node, "rep_call", None)
+                      and request.node.rep_call.failed)
 
-    failed = getattr(request.node, "rep_call", None) and request.node.rep_call.failed
+        os.makedirs("test-results/playwright", exist_ok=True)
+        safe_name = (
+            request.node.name
+            .replace("/", "_")
+            .replace(":", "_")
+            .replace("[", "_")
+            .replace("]", "_")
+        )
 
-    os.makedirs("test-results/playwright", exist_ok=True)
-    safe_name = (
-        request.node.name
-        .replace("/", "_")
-        .replace(":", "_")
-        .replace("[", "_")
-        .replace("]", "_")
-    )
+        if failed:
+            trace_path = f"test-results/playwright/{safe_name}-trace.zip"
+            try:
+                context.tracing.stop(path=trace_path)
+                allure.attach.file(
+                    trace_path,
+                    name="Playwright Trace",
+                    attachment_type=allure.attachment_type.ZIP,
+                )
+            except Exception:
+                pass
+        else:
+            try:
+                context.tracing.stop()
+            except Exception:
+                pass
 
-    if failed:
-        trace_path = f"test-results/playwright/{safe_name}-trace.zip"
-        context.tracing.stop(path=trace_path)
-        try:
-            allure.attach.file(
-                trace_path,
-                name="Playwright Trace",
-                attachment_type=allure.attachment_type.ZIP,
-            )
-        except Exception:
-            pass
-    else:
-        context.tracing.stop()
-
-    pg.close()
+        if pg is not None:
+            try:
+                pg.close()
+            except Exception:
+                pass
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)

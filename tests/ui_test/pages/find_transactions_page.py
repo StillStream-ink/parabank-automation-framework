@@ -1,4 +1,5 @@
 from tests.ui_test.pages.base_page import BasePage
+import re
 
 
 class FindTransactionsPage(BasePage):
@@ -16,12 +17,14 @@ class FindTransactionsPage(BasePage):
     FIND_BY_RANGE_BTN = "button[id='findByDateRange']"
     FIND_BY_AMOUNT_BTN = "button[id='findByAmount']"
 
+    # 日期格式：MM-DD-YYYY（用于判断是否有交易行）
+    DATE_PATTERN = re.compile(r"\d{2}-\d{2}-\d{4}")
+
     def navigate(self):
         super().navigate("findtrans.htm")
         self.page.wait_for_load_state("networkidle")
 
     def _select_account(self, account_id):
-        """统一账户选择逻辑（消除 4 处重复代码）"""
         self.page.locator(self.ACCOUNT_SELECT).select_option(account_id)
 
     def find_by_id(self, account_id, tx_id):
@@ -54,12 +57,13 @@ class FindTransactionsPage(BasePage):
         return self.page.locator("body").inner_text()
 
     def has_results(self):
-        """页面是否显示了交易记录。
+        """判断是否有交易记录。
 
-        修复：原实现 `"Transaction" in body or "No transactions" in body`
-        导致无结果时也返回 True（"No transactions" 含 "Transaction" 子串）。
+        基于真实探测结果：
+        - ParaBank 无记录时**只显示表头**（无 "No transactions" 提示）
+        - 有记录时表头 + 数据行（含 MM-DD-YYYY 日期）
+
+        判断策略：正文里是否出现日期格式（MM-DD-YYYY）。
         """
-        body = self.get_result_text().lower()
-        if "no transactions" in body:
-            return False
-        return "transaction" in body
+        body = self.get_result_text()
+        return bool(self.DATE_PATTERN.search(body))

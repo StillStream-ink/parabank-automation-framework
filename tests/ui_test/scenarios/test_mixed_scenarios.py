@@ -11,11 +11,15 @@ import pytest
 from tests.api_test.business.parabank_biz import ParaBankBiz
 from tests.ui_test.pages.overview_page import OverviewPage
 
-BASE_URL = "http://localhost:8080/parabank/services/bank"
-USER_JOHN = ("john", "demo")
-CUSTOMER_ID = "12212"
-ACC_A = "54321"
-ACC_B = "12345"
+from config.test_constants import (
+    ACC_A,
+    ACC_B,
+    BASE_URL,
+    CUSTOMER_ID_JOHN as CUSTOMER_ID,
+    USER_JOHN,
+)
+
+
 
 
 def _api_balance(account_id):
