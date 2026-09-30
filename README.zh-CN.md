@@ -243,5 +243,24 @@ xfail 覆盖        2.0 / 2      43 个（发现 bug）
 ***
 本项目由 pytest + Playwright 驱动，所有用例均可一键复现。
 
+##  已知技术债
 
+透明优于完美  以下是已知但暂未修复的问题：
 
+| 编号 | 问题 | 严重级别 | 计划 |
+|---|---|---|---|
+| TD-01 | `test_api_soap_parabank.py` 存在重复的账户获取代码（约 10 处）| 轻微 | 下一轮提取为 fixture |
+| TD-02 | 参数传递风格不统一（位置参数 vs 关键字参数）| 轻微 | 统一为关键字参数 |
+| TD-03 | 异常测试混用 `requests` 和 `ParaBankBiz` | 轻微 | 协议层测试走独立客户端 |
+| TD-04 | `test_api_contract.py` XML namespace 处理不一致 | 轻微 | 统一通过 `_tag()` 辅助函数解析 |
+| TD-05 | 部分用例缺 docstring | 极轻微 | 与 `@allure.title` 对齐补充 |
+
+**已修复（来自代码审查）**：
+
+-  **C-01** 硬编码配置  集中到 `config/test_constants.py`
+-  **M-05** HTTP 请求无 timeout  `BaseApi` + `ParaBankBiz` 默认 15 秒
+-  **Bug** `.env` 的 `API_BASE_URL` 值错误（多了 `/api`） 已修正
+
+---
+
+*本项目所有用例均可一键复现。*

@@ -207,4 +207,24 @@ Rating: ⭐⭐⭐⭐⭐  Excellent (Ready for Delivery)
 ***
 Driven by pytest + Playwright, all test cases can be reproduced with a single command.
 
+##  Known Technical Debt
 
+Transparency over perfection  these are known issues not yet addressed:
+
+| ID | Issue | Severity | Plan |
+|---|---|---|---|
+| TD-01 | Duplicate account-fetching code in `test_api_soap_parabank.py` (~10 occurrences) | Minor | Extract as fixture in next iteration |
+| TD-02 | Inconsistent parameter passing style (positional vs keyword) | Minor | Standardize to keyword args |
+| TD-03 | Exception tests mix `requests` and `ParaBankBiz` | Minor | Route protocol-layer tests through a dedicated client |
+| TD-04 | XML namespace handling inconsistent in `test_api_contract.py` | Minor | Unify all parsing through `_tag()` helper |
+| TD-05 | Some test methods lack docstrings | Trivial | Add docstrings aligned with `@allure.title` |
+
+**Fixed (from code review)**:
+
+-  **C-01** Hardcoded config  centralized in `config/test_constants.py`
+-  **M-05** HTTP requests lacked timeout  default 15s in `BaseApi` + `ParaBankBiz`
+-  **Bug** `API_BASE_URL` in `.env` had wrong value (extra `/api`)  fixed
+
+---
+
+*All test cases can be reproduced with a single command.*
