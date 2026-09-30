@@ -4,10 +4,9 @@ import xml.etree.ElementTree as ET
 
 from tests.api_test.business.parabank_biz import ParaBankBiz
 
-BASE_URL = "http://localhost:8080/parabank/services/bank"
-USER_JOHN = ("john", "demo")
-ACCOUNT_ID = "54321"
+from config.test_constants import BASE_URL, USER_JOHN, CUSTOMER_ID_JOHN, ACC_A, ACC_B
 
+ACCOUNT_ID = "54321"
 
 def _get_first_tx_id(biz, account_id=ACCOUNT_ID):
     """从账户交易流水中取第一个交易 ID。"""
@@ -15,7 +14,6 @@ def _get_first_tx_id(biz, account_id=ACCOUNT_ID):
     root = ET.fromstring(resp.text)
     tx = root.find("transaction")
     return tx.find("id").text if tx is not None else None
-
 
 pytestmark = [pytest.mark.api, pytest.mark.parabank, pytest.mark.transaction]
 

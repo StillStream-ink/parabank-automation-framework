@@ -1,3 +1,5 @@
+
+from config.test_constants import BASE_URL, USER_JOHN, CUSTOMER_ID_JOHN, ACC_A, ACC_B
 """数据一致性测试  精确校验余额变化。
 
 基于 logs/balance_consistency_probe.txt 的真实行为设计。
@@ -13,12 +15,6 @@ import xml.etree.ElementTree as ET
 
 from tests.api_test.business.parabank_biz import ParaBankBiz
 
-BASE_URL = "http://localhost:8080/parabank/services/bank"
-USER_JOHN = ("john", "demo")
-ACC_A = "54321"
-ACC_B = "12345"
-
-
 # ==================== 辅助 ====================
 
 def _get_balance(biz, account_id):
@@ -27,7 +23,6 @@ def _get_balance(biz, account_id):
         assert resp.status_code == 200, f"查询账户 {account_id} 失败"
         root = ET.fromstring(resp.text)
         return Decimal(root.find("balance").text)
-
 
 def _assert_delta(biz, account_id, before, expected_delta):
     with allure.step(
@@ -48,7 +43,6 @@ def _assert_delta(biz, account_id, before, expected_delta):
             name=f"账户 {account_id} 余额变化",
             attachment_type=allure.attachment_type.TEXT,
         )
-
 
 # ==================== 转账一致性 ====================
 
@@ -170,7 +164,6 @@ class TestTransferConsistency:
         with allure.step("4. 断言：余额未变"):
             _assert_delta(biz, ACC_A, before_a, 0)
 
-
 # ==================== 存款一致性 ====================
 
 @allure.feature("数据一致性-存款")
@@ -243,7 +236,6 @@ class TestDepositConsistency:
 
         with allure.step("4. 断言：余额未变"):
             _assert_delta(biz, ACC_A, before, 0)
-
 
 # ==================== 取款一致性 ====================
 

@@ -91,4 +91,45 @@ def _allure_environment():
         "\n".join(f"{k}={v}" for k, v in props.items()),
         encoding="utf-8",
     )
+
+    # ========== 生成 categories.json ==========
+    import json
+    categories = [
+        {
+            "name": "✅ 通过 (Passed)",
+            "matchedStatuses": ["passed"],
+        },
+        {
+            "name": "🐛 已知漏洞守卫 (xfail)",
+            "matchedStatuses": ["skipped"],
+        },
+        {
+            "name": "❌ 产品缺陷 (Product Bugs)",
+            "matchedStatuses": ["failed"],
+            "messageRegex": ".*AssertionError.*",
+        },
+        {
+            "name": "⚠️ 测试缺陷 / 环境问题 (Test Issues)",
+            "matchedStatuses": ["broken"],
+        },
+    ]
+    Path("allure-results/categories.json").write_text(
+        json.dumps(categories, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+    # ========== 生成 executor.json ==========
+    import os
+    executor = {
+        "name": "GitHub Actions" if os.getenv("GITHUB_ACTIONS") else "Local Execution",
+        "type": "github" if os.getenv("GITHUB_ACTIONS") else "local",
+        "buildName": os.getenv("GITHUB_RUN_NUMBER", "Local Run"),
+        "reportUrl": "https://stillstream-ink.github.io/parabank-automation-framework/",
+        "buildUrl": "https://github.com/StillStream-ink/parabank-automation-framework/actions",
+    }
+    Path("allure-results/executor.json").write_text(
+        json.dumps(executor, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
     yield

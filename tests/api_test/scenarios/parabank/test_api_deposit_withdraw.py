@@ -4,10 +4,9 @@ import xml.etree.ElementTree as ET
 
 from tests.api_test.business.parabank_biz import ParaBankBiz
 
-BASE_URL = "http://localhost:8080/parabank/services/bank"
-USER_JOHN = ("john", "demo")
-ACCOUNT_ID = "54321"
+from config.test_constants import BASE_URL, USER_JOHN, CUSTOMER_ID_JOHN, ACC_A, ACC_B
 
+ACCOUNT_ID = "54321"
 
 pytestmark = [pytest.mark.api, pytest.mark.parabank, pytest.mark.deposit, pytest.mark.withdraw]
 

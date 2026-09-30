@@ -1,3 +1,5 @@
+
+from config.test_constants import BASE_URL, USER_JOHN, CUSTOMER_ID_JOHN, ACC_A, ACC_B
 """转账/存款/取款 边界值参数化用例（精简版）。
 
 精简原则：每个参数值代表一个独立风险类别。
@@ -11,17 +13,11 @@ import xml.etree.ElementTree as ET
 
 from tests.api_test.business.parabank_biz import ParaBankBiz
 
-BASE_URL = "http://localhost:8080/parabank/services/bank"
-USER_JOHN = ("john", "demo")
-CUSTOMER_ID_JOHN = "12212"
-
-
 def _two_accounts(biz):
     resp = biz.get_customer_account_list(CUSTOMER_ID_JOHN)
     root = ET.fromstring(resp.text)
     acc_list = root.findall("account")
     return acc_list[0].find("id").text, acc_list[1].find("id").text
-
 
 # ============================================================
 # 转账
@@ -64,7 +60,6 @@ class TestTransferParam:
         resp = biz.transfer_funds(from_acc, to_acc, amount)
         assert resp.status_code != 200
 
-
 # ============================================================
 # 存款
 # ============================================================
@@ -97,7 +92,6 @@ class TestDepositParam:
         biz = ParaBankBiz(BASE_URL, USER_JOHN)
         resp = biz.deposit("54321", amount)
         assert resp.status_code != 200
-
 
 # ============================================================
 # 取款

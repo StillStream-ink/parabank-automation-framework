@@ -23,3 +23,25 @@ def get_db_config():
         "user": os.getenv("DB_USER"),
         "password": os.getenv("DB_PWD")
     }
+
+
+def get_api_base_url():
+    """获取 REST API 服务根路径。
+
+    防御性处理：
+    - 去掉结尾 /
+    - 若已包含 /services/bank，直接返回
+    - 若包含 /api（旧配置），先去掉
+    - 最后拼上 /services/bank
+    """
+    base = (os.getenv("API_BASE_URL") or "http://localhost:8080/parabank").rstrip("/")
+
+    # 已经带完整路径
+    if base.endswith("/services/bank"):
+        return base
+
+    # 去掉尾部的 /api（历史遗留配置）
+    if base.endswith("/api"):
+        base = base[:-4]
+
+    return f"{base}/services/bank"

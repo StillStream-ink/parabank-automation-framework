@@ -1,3 +1,5 @@
+
+from config.test_constants import BASE_URL, USER_JOHN, CUSTOMER_ID_JOHN, ACC_A, ACC_B
 """ParaBank 响应契约校验  用 pydantic 校验字段名/类型/必填。"""
 import pytest
 import xml.etree.ElementTree as ET
@@ -6,6 +8,7 @@ import allure
 
 from tests.api_test.business.parabank_biz import ParaBankBiz
 from tests.api_test.schemas.parabank_schemas import (
+
     Account,
     BillPayResult,
     Customer,
@@ -13,18 +16,14 @@ from tests.api_test.schemas.parabank_schemas import (
     Transaction,
 )
 
-BASE_URL = "http://localhost:8080/parabank/services/bank"
-USER_JOHN = ("john", "demo")
 CUSTOMER_ID = "12212"
 ACCOUNT_ID = "54321"
-
 
 # ==================== XML  dict 辅助 ====================
 
 def _tag(elem):
     """去掉 namespace 前缀。"""
     return elem.tag.split("}")[-1] if "}" in elem.tag else elem.tag
-
 
 def _customer_dict(xml_text):
     root = ET.fromstring(xml_text)
@@ -42,7 +41,6 @@ def _customer_dict(xml_text):
         "ssn": root.find("ssn").text,
     }
 
-
 def _account_dict(elem):
     return {
         "id": int(elem.find("id").text),
@@ -50,7 +48,6 @@ def _account_dict(elem):
         "type": elem.find("type").text,
         "balance": elem.find("balance").text,
     }
-
 
 def _transaction_dict(elem):
     return {
@@ -62,14 +59,12 @@ def _transaction_dict(elem):
         "description": elem.find("description").text,
     }
 
-
 def _find_child_text(root, name):
     """在带 namespace 的根节点下查找无 namespace 的子节点文本。"""
     for child in root:
         if _tag(child) == name:
             return child.text
     return None
-
 
 # ==================== 用例 ====================
 

@@ -1,3 +1,5 @@
+
+from config.test_constants import BASE_URL, USER_JOHN, CUSTOMER_ID_JOHN, ACC_A, ACC_B
 """异常场景测试  非法参数/缺失参数/错误方法/特殊字符/超大数值。
 
 基于 logs/exception_probe.txt 的真实响应设计。
@@ -7,10 +9,6 @@ import allure
 import requests
 
 from tests.api_test.business.parabank_biz import ParaBankBiz
-
-BASE_URL = "http://localhost:8080/parabank/services/bank"
-USER_JOHN = ("john", "demo")
-
 
 # ==================== 转账-缺失参数 ====================
 
@@ -60,7 +58,6 @@ class TestTransferInvalidParams:
         resp = biz.post_query("/transfer", params={})
         assert 400 <= resp.status_code < 500
 
-
 # ==================== 转账-特殊字符 / 注入 ====================
 
 @allure.feature("异常场景-转账特殊字符")
@@ -89,7 +86,6 @@ class TestTransferSpecialChars:
         })
         assert 400 <= resp.status_code < 500
 
-
 # ==================== 协议层异常 ====================
 
 @allure.feature("异常场景-协议层")
@@ -114,7 +110,6 @@ class TestProtocolExceptions:
         biz = ParaBankBiz(BASE_URL, USER_JOHN)
         resp = biz.get_single_account_detail("99999999")
         assert 400 <= resp.status_code < 500
-
 
 # ==================== 存款-超大 / 非法数值 ====================
 

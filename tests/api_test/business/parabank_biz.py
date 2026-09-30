@@ -72,9 +72,12 @@ class ParaBankBiz:
     base_url: http://localhost:8080/parabank/services/bank
     """
 
-    def __init__(self, base_url, auth=None):
+    DEFAULT_TIMEOUT = 15
+
+    def __init__(self, base_url, auth=None, timeout=None):
         self.base_url = base_url.rstrip("/")
         self.auth = auth
+        self.timeout = timeout or self.DEFAULT_TIMEOUT
         self.session = requests.Session()
 
         # Monkey-patch session.request，加 Allure 记录
@@ -91,6 +94,7 @@ class ParaBankBiz:
 
     @_retry_decorator()
     def _do_request(self, method, url, **kwargs):
+        kwargs.setdefault("timeout", self.timeout)
         return self.session.request(method, url, **kwargs)
 
     def get(self, path, **kwargs):
