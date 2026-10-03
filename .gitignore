@@ -37,7 +37,7 @@ logs/
 .env.*.local
 
 # ====== 备份 / 归档 ======
-*.bak
+*.bak**
 _archive/
 tests_backup_gbk/
 
@@ -52,10 +52,14 @@ tests_backup_gbk/
 Thumbs.db
 desktop.ini
 
+# ====== 测试产物 ======
 test-results/
+reports/
 
 # ====== 备份包 ======
 *.zip
 
-# ====== 归档 ======
-reports/
+# ====== 临时文件 ======
+*.tmp
+*.temp
+~$*
