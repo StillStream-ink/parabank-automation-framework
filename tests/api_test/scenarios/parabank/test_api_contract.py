@@ -1,5 +1,11 @@
 """ParaBank 响应契约校验  用 pydantic 校验字段名/类型/必填。"""
-from config.test_constants import BASE_URL, USER_JOHN, CUSTOMER_ID_JOHN, ACC_A, ACC_B
+from config.test_constants import (
+    BASE_URL,
+    USER_JOHN,
+    CUSTOMER_ID_JOHN,
+    ACC_A,
+    ACC_B,
+)
 
 import pytest
 import xml.etree.ElementTree as ET
@@ -15,8 +21,8 @@ from tests.api_test.schemas.parabank_schemas import (
     Transaction,
 )
 
-CUSTOMER_ID = "12212"
-ACCOUNT_ID = "54321"
+CUSTOMER_ID = CUSTOMER_ID_JOHN
+ACCOUNT_ID = ACC_A
 
 
 # ==================== XML dict 辅助 ====================
@@ -130,8 +136,10 @@ class TestContract:
     def test_transaction_single_contract(self):
         biz = ParaBankBiz(BASE_URL, USER_JOHN)
         root = _parse(biz.get_account_transactions(ACCOUNT_ID).text)
-        tx_id = root.findtext("transaction/id")    # ← 改成 findtext
+        tx_id = root.findtext("transaction/id")
         resp = biz.get_transaction_by_id(tx_id)
+        assert resp.status_code == 200
+        Transaction(**_transaction_dict(_parse(resp.text)))
 
     @allure.story("贷款契约")
     @allure.title("TC_CT_007 贷款响应的字段结构符合契约")
@@ -159,6 +167,6 @@ class TestContract:
         data = {
             "accountId": int(root.find("accountId").text),
             "amount": root.find("amount").text,
-            "payeeName": root.find("payeeName").text,
+            "payeeName": root.findtext("payeeName"),
         }
         BillPayResult(**data)

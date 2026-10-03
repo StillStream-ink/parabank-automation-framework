@@ -6,7 +6,7 @@ from tests.api_test.business.parabank_biz import ParaBankBiz
 
 from config.test_constants import BASE_URL, USER_JOHN, CUSTOMER_ID_JOHN, ACC_A, ACC_B
 
-ACCOUNT_ID = "54321"
+ACCOUNT_ID = ACC_A
 
 pytestmark = [pytest.mark.api, pytest.mark.parabank, pytest.mark.deposit, pytest.mark.withdraw]
 
@@ -74,7 +74,7 @@ class TestDepositWithdraw:
         resp = biz.withdraw(ACCOUNT_ID, -50)
         assert resp.status_code != 200, "取款负数应被拒绝"
 
-    @pytest.mark.xfail(reason="BUG_205：/withdraw 允许金额为 0，缺少参数校验")
+    @pytest.mark.xfail(reason="BUG_205：withdraw 允许金额为 0，缺少参数校验")
     @allure.story("取款-边界")
     @allure.title("TC_PB_WD_004 取款金额为 0")
     def test_withdraw_amount_zero(self):

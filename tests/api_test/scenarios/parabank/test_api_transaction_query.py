@@ -6,7 +6,7 @@ from tests.api_test.business.parabank_biz import ParaBankBiz
 
 from config.test_constants import BASE_URL, USER_JOHN, CUSTOMER_ID_JOHN, ACC_A, ACC_B
 
-ACCOUNT_ID = "54321"
+ACCOUNT_ID = ACC_A
 
 def _get_first_tx_id(biz, account_id=ACCOUNT_ID):
     """从账户交易流水中取第一个交易 ID。"""
