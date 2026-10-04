@@ -1,4 +1,4 @@
-"""ParaBank 测试数据清理。
+﻿"""ParaBank 测试数据清理。
 
 核心策略：调用官方 /initializeDB 接口，将数据库重置为初始状态。
 """
@@ -8,6 +8,7 @@ import allure
 import requests
 
 from config.env_config import get_ui_url
+from config.test_constants import CUSTOMER_ID_JOHN, USER_JOHN
 
 log = logging.getLogger(__name__)
 
@@ -15,7 +16,7 @@ log = logging.getLogger(__name__)
 class ParaBankCleaner:
     """ParaBank 数据清理器。"""
 
-    def __init__(self, base_url=None, auth=("john", "demo")):
+    def __init__(self, base_url=None, auth=USER_JOHN):
         # base_url 形如 http://localhost:8080/parabank/services/bank
         self.base_url = (base_url or self._default_base_url()).rstrip("/")
         self.auth = auth
@@ -44,7 +45,7 @@ class ParaBankCleaner:
             log.warning("[cleanup] 重置异常：%s", e)
             return False
 
-    def account_count(self, customer_id="12212"):
+    def account_count(self, customer_id=CUSTOMER_ID_JOHN):
         """返回当前客户名下的账户数量，用于验证清理效果。"""
         url = f"{self.base_url}/customers/{customer_id}/accounts"
         try:

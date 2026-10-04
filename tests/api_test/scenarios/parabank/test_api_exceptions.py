@@ -119,7 +119,7 @@ class TestDepositNumericExceptions:
     def test_deposit_huge_number_rejected(self):
         """1e100 超大数应被拒绝"""
         biz = ParaBankBiz(BASE_URL, USER_JOHN)
-        resp = biz.deposit("54321", "1e100")
+        resp = biz.deposit(ACC_A, "1e100")
         assert 400 <= resp.status_code < 500
 
     @pytest.mark.parametrize("bad_value,desc", [
@@ -129,6 +129,6 @@ class TestDepositNumericExceptions:
     def test_deposit_special_float_rejected(self, bad_value, desc):
         """NaN / Infinity 应被拒绝"""
         biz = ParaBankBiz(BASE_URL, USER_JOHN)
-        resp = biz.deposit("54321", bad_value)
+        resp = biz.deposit(ACC_A, bad_value)
         assert 400 <= resp.status_code < 500, \
             f"deposit amount={desc} 应 4xx，实际 {resp.status_code}"

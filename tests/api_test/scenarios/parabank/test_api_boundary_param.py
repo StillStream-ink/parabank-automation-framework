@@ -73,7 +73,7 @@ class TestDepositParam:
     def test_deposit_valid_amount(self, amount):
         """合法金额存款应成功（存款无上限）"""
         biz = ParaBankBiz(BASE_URL, USER_JOHN)
-        resp = biz.deposit("54321", amount)
+        resp = biz.deposit(ACC_A, amount)
         assert resp.status_code == 200
         assert "successfully deposited" in resp.text.lower()
 
@@ -82,7 +82,7 @@ class TestDepositParam:
     ])
     def test_deposit_zero(self, amount):
         biz = ParaBankBiz(BASE_URL, USER_JOHN)
-        resp = biz.deposit("54321", amount)
+        resp = biz.deposit(ACC_A, amount)
         assert resp.status_code != 200
 
     @pytest.mark.parametrize("amount", [
@@ -90,7 +90,7 @@ class TestDepositParam:
     ])
     def test_deposit_negative_amount(self, amount):
         biz = ParaBankBiz(BASE_URL, USER_JOHN)
-        resp = biz.deposit("54321", amount)
+        resp = biz.deposit(ACC_A, amount)
         assert resp.status_code != 200
 
 # ============================================================
@@ -106,8 +106,8 @@ class TestWithdrawParam:
     def test_withdraw_valid_amount(self, amount):
         """合法小金额取款应成功（先存款保证余额充足）"""
         biz = ParaBankBiz(BASE_URL, USER_JOHN)
-        biz.deposit("54321", 100)
-        resp = biz.withdraw("54321", amount)
+        biz.deposit(ACC_A, 100)
+        resp = biz.withdraw(ACC_A, amount)
         assert resp.status_code == 200
         assert "successfully withdrew" in resp.text.lower()
 
@@ -117,7 +117,7 @@ class TestWithdrawParam:
     ])
     def test_withdraw_invalid_amount(self, amount):
         biz = ParaBankBiz(BASE_URL, USER_JOHN)
-        resp = biz.withdraw("54321", amount)
+        resp = biz.withdraw(ACC_A, amount)
         assert resp.status_code != 200
 
     @pytest.mark.parametrize("amount", [
@@ -125,5 +125,5 @@ class TestWithdrawParam:
     ])
     def test_withdraw_negative_amount(self, amount):
         biz = ParaBankBiz(BASE_URL, USER_JOHN)
-        resp = biz.withdraw("54321", amount)
+        resp = biz.withdraw(ACC_A, amount)
         assert resp.status_code != 200

@@ -155,7 +155,7 @@ class TestTransferConsistency:
         with allure.step("1. 记录转账前余额"):
             before_a = _get_balance(biz, ACC_A)
 
-        with allure.step("2. 尝试从 54321 转到 54321（同账户）"):
+        with allure.step(f"2. 尝试从 {ACC_A} 转到 {ACC_A}（同账户）"):
             resp = biz.transfer_funds(ACC_A, ACC_A, 100)
 
         with allure.step("3. 断言：同账户转账应被拒绝"):
@@ -177,7 +177,7 @@ class TestDepositConsistency:
         with allure.step("1. 记录存款前余额"):
             before = _get_balance(biz, ACC_A)
 
-        with allure.step("2. 存款 100 到 54321"):
+        with allure.step(f"2. 存款 100 到 {ACC_A}"):
             resp = biz.deposit(ACC_A, 100)
             assert resp.status_code == 200
             allure.attach(resp.text, "存款响应",
