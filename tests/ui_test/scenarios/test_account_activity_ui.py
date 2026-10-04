@@ -1,5 +1,6 @@
 import pytest
 import allure
+from config.test_constants import ACC_A
 from tests.ui_test.pages.account_activity_page import AccountActivityPage
 
 

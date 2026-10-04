@@ -1,3 +1,4 @@
+from config.test_constants import ACC_A
 import pytest
 import allure
 from tests.ui_test.pages.open_account_page import OpenAccountPage
@@ -15,7 +16,7 @@ class TestOpenAccountUI:
     def test_open_savings_account(self, logged_in_page, ui_base_url):
         page = OpenAccountPage(logged_in_page, ui_base_url)
         page.navigate()
-        page.open_account(account_type=1, from_account_id="54321")  # 1=SAVINGS
+        page.open_account(account_type=1, from_account_id=ACC_A)  # 1=SAVINGS
         body = page.get_body_text()
         assert "Account Opened" in body or "Congratulations" in body or "new account" in body.lower(), \
             f"开户失败，页面文本前 200 字：{body[:200]}"
@@ -25,7 +26,7 @@ class TestOpenAccountUI:
     def test_open_checking_account(self, logged_in_page, ui_base_url):
         page = OpenAccountPage(logged_in_page, ui_base_url)
         page.navigate()
-        page.open_account(account_type=0, from_account_id="54321")  # 0=CHECKING
+        page.open_account(account_type=0, from_account_id=ACC_A)  # 0=CHECKING
         body = page.get_body_text()
         assert "Account Opened" in body or "Congratulations" in body or "new account" in body.lower(), \
             f"开户失败，页面文本前 200 字：{body[:200]}"

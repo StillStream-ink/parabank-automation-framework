@@ -1,6 +1,8 @@
+﻿from config.test_constants import ACC_A
 import allure
 import pytest
 from tests.ui_test.pages.loan_page import LoanPage
+
 
 
 pytestmark = [pytest.mark.ui, pytest.mark.loan]
@@ -15,7 +17,7 @@ class TestLoanUI:
     def test_loan_apply_success(self, logged_in_page, ui_base_url):
         loan_page = LoanPage(logged_in_page, ui_base_url)
         loan_page.navigate()
-        loan_page.apply_loan("1000", "200", "54321")
+        loan_page.apply_loan("1000", "200", ACC_A)
         status = loan_page.get_loan_status()
         assert loan_page.is_loan_processed(), "系统未处理贷款请求"
         assert status in ("Approved", "Denied"), f"状态异常: {status}"
@@ -27,7 +29,7 @@ class TestLoanUI:
         """ParaBank 正确拒绝 0 元贷款（Denied 或 Error）"""
         loan_page = LoanPage(logged_in_page, ui_base_url)
         loan_page.navigate()
-        loan_page.apply_loan("0", "100", "54321")
+        loan_page.apply_loan("0", "100", ACC_A)
         status = loan_page.get_loan_status()
         assert loan_page.is_loan_processed(), "系统未处理请求"
         assert status in ("Denied", "Error"), f"0 元应被拒绝，实际: {status}"
@@ -39,7 +41,7 @@ class TestLoanUI:
         """ParaBank 正确拒绝超额贷款"""
         loan_page = LoanPage(logged_in_page, ui_base_url)
         loan_page.navigate()
-        loan_page.apply_loan("999999", "100", "54321")
+        loan_page.apply_loan("999999", "100", ACC_A)
         status = loan_page.get_loan_status()
         assert loan_page.is_loan_processed(), "系统未处理请求"
         assert status in ("Denied", "Error"), f"超额应被拒绝，实际: {status}"
