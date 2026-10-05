@@ -8,7 +8,7 @@ class AccountActivityPage(BasePage):
     TYPE_SELECT = "select[id='transactionType']"
     GO_BUTTON = "input[value='Go']"
 
-    def navigate(self, account_id="54321"):
+    def navigate(self, account_id=ACC_A):
         self.page.goto(f"{self.ui_base_url}/activity.htm?id={account_id}")
         self.page.wait_for_load_state("networkidle")
 
