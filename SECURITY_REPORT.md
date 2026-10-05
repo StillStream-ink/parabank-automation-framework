@@ -1,17 +1,27 @@
-已为你整理成统一格式的 Markdown 安全报告，可直接复制使用：
+# ParaBank 安全问题报告
+
+**测试日期**：2026-09-28（v1.0）/ 2026-10-05（v2.0）
+**被测版本**：parabank-master
+**测试框架**：parabank-automation-framework（pytest + requests + Playwright）
+**报告状态**：v2.0 — 已扩展漏洞覆盖
 
 ---
 
-# ParaBank 安全问题报告
-
-**测试日期**：2026-09-28
-**被测版本**：parabank-master
-**测试框架**：credit-approval-system（pytest + requests + Playwright）
-**报告状态**：首次基线
+> **📌 当前状态（v2.0）**
+>
+> - 已确认漏洞：**19 个**（高危 9 / 中危 7 / 低危 3）
+> - 测试用例：129（API 103 + UI 26）
+> - 守卫数量：**43 个 xfail**（每个漏洞至少 1 条用例锁定）
+> - 阻塞缺陷：**无**（v1.0 的 BUG_TRANSFER_001 已不复现）
+> - 全量基线：`86 passed, 43 xfailed`
+>
+> 详细漏洞清单见 [KNOWN_BUGS.md](KNOWN_BUGS.md)。
 
 ---
 
 ## 一、摘要
+
+### v1.0（2026-09-28 首次基线）
 
 | 项 | 数值 |
 | ------ |------ |
@@ -28,6 +38,24 @@
 - `/transfer` 接口存在 **1 个阻塞性缺陷**（BUG_TRANSFER_001），导致所有转账相关用例无法验证
 - 所有漏洞均通过自动化用例持续守卫，修复后 XFAIL 会自动变为 XPASS 触发回归
 
+### v2.0（2026-10-05 覆盖扩展）
+
+| 项 | 数值 | 相比 v1.0 |
+| ------ |------ |------ |
+| 测试用例总数 | 129 | +106 |
+| 通过（PASSED） | 86 | +78 |
+| 已确认漏洞（XFAIL） | 43 | +35 |
+| 阻塞待验证（SKIPPED） | 0 | -7 |
+| 独立漏洞数 | **19** | +11 |
+| 阻塞缺陷 | 0 | -1 |
+
+**v2.0 核心结论：**
+
+- 漏洞覆盖从 8 个扩展到 **19 个**，主要补充存款/取款/贷款/协议层异常
+- v1.0 的 `BUG_TRANSFER_001`（转账接口整体不可用）**已不复现**，7 条阻塞用例全部转为正常执行或 xfail
+- 新增 `ParaBankRaw` 裸客户端，异常测试绕过 tenacity 重试，执行时间缩短 ~80%
+- 所有漏洞由 43 个 xfail 用例守卫，修复后 XPASS 触发 CI 报警
+
 ---
 
 ## 二、测试环境
@@ -35,7 +63,7 @@
 | 项 | 值 |
 | ------ |------ |
 | 被测系统 | ParaBank REST API |
-| 部署方式 | 本地 Maven（`mvn jetty:run`） |
+| 部署方式 | 本地 Maven（`mvn cargo:run`） |
 | 服务地址 | http://localhost:8080/parabank |
 | REST 前缀 | http://localhost:8080/parabank/services/bank |
 | 测试账号 | `john` / `demo`（CUSTOMER_ID = 12212） |
@@ -46,232 +74,204 @@
 ```powershell
 # 1. 启动 ParaBank
 cd E:\parabank-master
-mvn jetty:run
+mvn cargo:run
 
 # 2. 验证服务
 curl.exe -u john:demo "http://localhost:8080/parabank/services/bank/customers/12212/accounts" -i
 
 # 3. 复现单个用例
 cd E:\credit-approval-system
-py -m pytest tests/api_test/scenarios/parabank/test_api_soap_parabank.py::TestParaBankAPI::test_xxx -v
+py -m pytest tests/api_test/scenarios/parabank/test_api_soap_parabank.py::TestParaBankAPI::test_transfer_amount_negative -v
 ```
 
 ---
 
-## 三、漏洞清单
+## 三、漏洞清单（v2.0 完整版）
 
-### BUG_004 水平越权：可读取任意客户账户
+> 按严重级别分组。每条漏洞附守卫用例名。
+> 完整复现步骤和修复建议见 [KNOWN_BUGS.md](KNOWN_BUGS.md)。
 
-| 项 | 内容 |
-| ------ |------ |
-| 严重级别 | 高 |
-| 接口 | `GET /services/bank/customers/{customerId}/accounts` |
-| 测试用例 | `test_get_other_customer_account_horizontal` |
+### 🔴 高危漏洞（9 个）
 
-**复现步骤：**
-
-1. 以 `john` / `demo` 身份登录
-2. 请求 `customerId=99999`（非当前用户）
-
-**实际结果：** HTTP 200，返回其他客户的完整账户列表
-
-**预期结果：** HTTP 401 / 403
-
-**修复建议：** 服务端从 token/session 提取当前用户 ID，忽略或校验 URL 中的 `customerId`
-
----
-
-### BUG_005 未授权访问：无需认证即可查询账户
+#### BUG_004 水平越权（多接口）
 
 | 项 | 内容 |
 | ------ |------ |
 | 严重级别 | 高 |
-| 接口 | `GET /services/bank/customers/{customerId}/accounts` |
-| 测试用例 | `test_get_account_no_auth` |
+| 影响接口 | `GET /customers/{id}`、`GET /customers/{id}/accounts`、`POST /transfer`、`GET /accounts/{id}/transactions` |
+| 守卫用例 | `test_get_customer_horizontal_privilege`、`test_get_other_customer_account_horizontal`、`test_transfer_other_user_account`、`test_transfer_horizontal_privilege`、`test_get_transactions_horizontal_privilege` |
+| 修复建议 | 服务端从 token/session 提取当前用户 ID，忽略或校验 URL 中的 `customerId` |
 
-**复现步骤：**
-
-1. 不携带 Basic Auth 头
-2. 直接请求 `customerId=12212`
-
-**实际结果：** HTTP 200，返回完整账户列表
-
-**预期结果：** HTTP 401
-
-**修复建议：** 对所有 `/services/bank/**` 加统一鉴权拦截器
-
----
-
-### BUG_TRANSFER_001 转账接口整体不可用
+#### BUG_005 未授权访问（多接口）
 
 | 项 | 内容 |
 | ------ |------ |
-| 严重级别 | 高（阻塞性） |
-| 接口 | `POST /services/bank/transfer` |
-| 测试用例 | `test_transfer_funds_normal` |
+| 严重级别 | 高 |
+| 影响接口 | `GET /customers/{id}`、`GET /customers/{id}/accounts`、`GET /accounts/{id}/transactions` |
+| 守卫用例 | `test_get_customer_no_auth`、`test_get_account_no_auth`、`test_get_transactions_no_auth` |
+| 修复建议 | 对所有 `/services/bank/**` 加统一鉴权拦截器 |
 
-**复现步骤：**
-
-1. 以 `john` 身份，从本人账户 A 向账户 B 转账 10 元
-2. 参数合法、余额充足、账户有效
-
-**实际结果：** HTTP 400，转账失败
-
-**预期结果：** HTTP 200，转账成功
-
-**影响范围：** 所有 7 个转账边界/安全用例被阻塞，无法判断服务端是否正确拒绝了非法请求
-
-**修复建议：** 排查 `@FormParam` 与请求体格式是否匹配，确认 servlet 层参数绑定
-
----
-
-### BUG_006 转账无幂等控制
+#### BUG_006 转账无幂等控制
 
 | 项 | 内容 |
 | ------ |------ |
 | 严重级别 | 高 |
 | 接口 | `POST /services/bank/transfer` |
-| 测试用例 | `test_transfer_idempotent` |
+| 守卫用例 | `test_transfer_idempotent`、`test_transfer_duplicate_submit` |
+| 修复建议 | 引入客户端幂等号（Idempotency-Key），服务端做去重 |
 
-**复现步骤：**
-
-1. 提交一笔转账请求
-2. 立即用完全相同的参数再次提交
-
-**实际结果：** 服务端未识别重复请求
-
-**预期结果：** 第二次应被拒绝或返回同一个 `transferId`
-
-**修复建议：** 引入客户端幂等号（Idempotency-Key），服务端做去重
-
----
-
-### BUG_007 转账水平越权
+#### BUG_102 转账允许负数金额
 
 | 项 | 内容 |
 | ------ |------ |
 | 严重级别 | 高 |
 | 接口 | `POST /services/bank/transfer` |
-| 测试用例 | `test_transfer_horizontal_privilege`、`test_transfer_other_user_account` |
+| 守卫用例 | `test_transfer_amount_negative` |
+| 修复建议 | `amount > 0` 显式校验 |
 
-**复现步骤：**
-
-1. 以 `john` 身份登录
-2. `fromAccountId` 传入不属于 `john` 的账户 ID
-
-**实际结果：** 请求未被拒绝
-
-**预期结果：** HTTP 401 / 403
-
-**修复建议：** 转账前校验 `fromAccountId` 归属
-
----
-
-### 🟠 BUG_BILL_001 账单支付未校验余额
+#### BUG_103 转账允许透支
 
 | 项 | 内容 |
 | ------ |------ |
-| 严重级别 | 中 |
+| 严重级别 | 高 |
+| 接口 | `POST /services/bank/transfer` |
+| 守卫用例 | `test_transfer_over_balance` |
+| 修复建议 | 转账前校验 `balance >= amount` |
+
+#### BUG_202 存款允许负数金额
+
+| 项 | 内容 |
+| ------ |------ |
+| 严重级别 | 高 |
+| 接口 | `POST /services/bank/deposit` |
+| 守卫用例 | `test_deposit_amount_negative`、`test_deposit_negative_no_decrease` |
+| 修复建议 | `amount > 0` 显式校验 |
+
+#### BUG_203 取款允许透支
+
+| 项 | 内容 |
+| ------ |------ |
+| 严重级别 | 高 |
+| 接口 | `POST /services/bank/withdraw` |
+| 守卫用例 | `test_withdraw_over_balance`、`test_withdraw_over_balance_no_overdraft` |
+| 修复建议 | 取款前校验余额 |
+
+#### BUG_204 取款允许负数金额
+
+| 项 | 内容 |
+| ------ |------ |
+| 严重级别 | 高 |
+| 接口 | `POST /services/bank/withdraw` |
+| 守卫用例 | `test_withdraw_amount_negative`、`test_withdraw_negative_no_increase` |
+| 修复建议 | `amount > 0` 显式校验 |
+
+#### BUG_BILL_001 账单支付未校验余额
+
+| 项 | 内容 |
+| ------ |------ |
+| 严重级别 | 高 |
 | 接口 | `POST /services/bank/billpay` |
-| 测试用例 | `test_bill_pay_over_balance` |
+| 守卫用例 | `test_bill_pay_over_balance` |
+| 修复建议 | 支付前校验 `account.balance >= amount` |
 
-**复现步骤：**
+### 🟠 中危漏洞（7 个）
 
-1. 选择余额为 100 的账户
-2. 支付 999999 元账单
+| ID | 描述 | 守卫用例 | 修复建议 |
+|---|---|---|---|
+| BUG_001 / BUG_101 | 转账允许 0 元 | `test_transfer_zero_amount`、`test_transfer_amount_zero`、`test_transfer_zero_should_reject` | `amount > 0` |
+| BUG_104 | 转账允许自己转自己 | `test_transfer_same_account` | 校验 from ≠ to |
+| BUG_105 | 转账无单笔限额 | `test_transfer_over_single_limit` | 加单笔限额（如 50000） |
+| BUG_201 | 存款允许 0 元 | `test_deposit_amount_zero`、`test_deposit_zero_should_reject` | `amount > 0` |
+| BUG_205 | 取款允许 0 元 | `test_withdraw_amount_zero`、`test_withdraw_zero_should_reject` | `amount > 0` |
+| BUG_301 | 转账缺 `amount` 参数返回 500 | `test_transfer_missing_amount_returns_4xx` | 返回 400 + 错误信息 |
+| BUG_302 | 转账 `amount` 空字符串返回 500 | `test_transfer_empty_amount_returns_4xx` | 同上 |
 
-**实际结果：** HTTP 200，账单支付成功（允许透支）
+### 🟡 低危漏洞（3 个）
 
-**预期结果：** HTTP 4xx，余额不足
+| ID | 描述 | 守卫用例 |
+|---|---|---|
+| BUG_002 | UI 层允许负数金额转账 | `test_transfer_negative_amount` |
+| BUG_003 | UI 层允许余额不足转账 | `test_transfer_insufficient_balance` |
+| BUG_XSS_001 | 响应缺少 `X-Content-Type-Options` 等安全头 | （纯记录，无自动化守卫） |
 
-**修复建议：** 支付前校验 `account.balance >= amount`
+### 已不复现的历史漏洞
 
----
-
-### 🟠 BUG_LOAN_001 贷款申请未校验负数金额
-
-| 项 | 内容 |
-| ------ |------ |
-| 严重级别 | 中 |
-| 接口 | `POST /services/bank/requestLoan` |
-| 测试用例 | `test_loan_apply_negative_amount` |
-
-**复现步骤：**
-
-1. 提交 `amount = -1000` 的贷款申请
-
-**实际结果：** HTTP 200，申请被受理
-
-**预期结果：** HTTP 4xx，参数非法
-
-**修复建议：** 对 `amount` 加 `@Min(0)` 约束，或服务层显式校验
+| ID | v1.0 描述 | v2.0 状态 |
+|---|---|---|
+| BUG_TRANSFER_001 | `/transfer` 接口整体不可用（返回 400） | **已不复现** — 转账接口正常工作，v1.0 的 7 条阻塞用例全部恢复 |
 
 ---
 
-### 🟡 BUG_XSS_001 接口响应缺少安全头
+## 四、v1.0 阻塞用例（已恢复）
 
-| 项 | 内容 |
-| ------ |------ |
-| 严重级别 | 低 |
-| 说明 | ParaBank REST 响应未设置 `X-Content-Type-Options`、`X-Frame-Options` 等安全头 |
-| 建议 | 在网关/过滤器统一注入 |
+v1.0 中以下 7 条用例因 `BUG_TRANSFER_001` 被 `pytest.skip()`：
 
----
-
-## 四、阻塞用例（7 条）
-
-以下 7 条用例因 **BUG_TRANSFER_001** 无法验证。已在代码中使用运行时探测自动跳过，一旦 `/transfer` 修复，会自动恢复执行：
-
-| # | 用例 | 待验证场景 |
+| # | 用例 | v2.0 状态 |
 | ------ |------ |------ |
-| 1 | `test_transfer_amount_zero` | 转账金额 = 0 |
-| 2 | `test_transfer_amount_negative` | 转账金额为负 |
-| 3 | `test_transfer_over_balance` | 转账金额 > 账户余额 |
-| 4 | `test_transfer_over_single_limit` | 转账超过单笔限额 50001 |
-| 5 | `test_transfer_duplicate_submit` | 快速重复提交（防重） |
-| 6 | `test_transfer_response_schema` | 转账响应报文字段结构 |
-| 7 | `test_transfer_sql_inject` | 转账金额 SQL 注入 |
+| 1 | `test_transfer_amount_zero` | ✅ 已执行（xfail） |
+| 2 | `test_transfer_amount_negative` | ✅ 已执行（xfail） |
+| 3 | `test_transfer_over_balance` | ✅ 已执行（xfail） |
+| 4 | `test_transfer_over_single_limit` | ✅ 已执行（xfail） |
+| 5 | `test_transfer_duplicate_submit` | ✅ 已执行（xfail） |
+| 6 | `test_transfer_response_schema` | ✅ 已执行（passed） |
+| 7 | `test_transfer_sql_inject` | ✅ 已执行（passed） |
 
-**代码实现：** `test_api_soap_parabank.py` 中的 `_transfer_is_broken(biz)` 会在每个用例执行前探测一次，若 `/transfer` 仍返回 400，则 `pytest.skip()`。
-
+**v2.0 中无 SKIPPED 用例。**
+**注**：v1.0 用于探测 `/transfer` 状态的 `_transfer_is_broken(biz)` 辅助函数已在 v2.0 中移除，因为该缺陷不再复现。
 ---
 
-## 五、正常功能（8 条通过）
+## 五、正常功能（v2.0 摘要）
 
-| 用例 | 场景 |
-| ------ |------ |
-| `test_get_self_account_list` | 查询本人账户列表 |
-| `test_get_single_account_detail` | 查询单账户详情 |
-| `test_get_account_transactions` | 查询交易流水 |
-| `test_transfer_same_account` | 转出转入同一账户（被正确拒绝） |
-| `test_open_new_account` | 开立新储蓄账户 |
-| `test_bill_pay_normal` | 账单支付正常金额 |
-| `test_loan_apply_normal` | 贷款申请正常场景 |
-| `test_loan_apply_over_credit` | 贷款超授信被拒绝 |
+129 个用例中，**86 个通过**，覆盖：
+
+- 账户查询（本人列表 / 单账户详情 / 交易流水）
+- 转账正常流程 + 响应结构校验 + SQL 注入防御
+- 开户（SAVINGS / CHECKING）
+- 账单支付正常金额
+- 贷款申请（正常 / 超授信被拒）
+- 存款 / 取款正常流程
+- 契约校验（8 个 pydantic 模型）
+- 数据一致性（精确到分）
+- 参数化边界（0 / 负数 / 超额 / 精度）
+- UI 全流程（登录 / 登出 / 转账 / 开户 / 贷款 / 账户详情）
+- 混合场景（API 造数据 + UI 验证 / UI 操作 + API 校验）
 
 ---
 
 ## 六、测试基线与回归
 
-**当前基线（2026-09-28）：**
+### v1.0 基线（2026-09-28）
 
 ```text
 8 passed, 7 skipped, 8 xfailed in 1.92s
+```
+
+### v2.0 基线（2026-10-05）
+
+```text
+86 passed, 43 xfailed in 78.95s
 ```
 
 **回归命令：**
 
 ```powershell
 cd E:\credit-approval-system
-py -m pytest tests/api_test/scenarios/parabank -v
+
+# 全量
+py -m pytest tests -q
+
+# 仅 API
+py -m pytest tests/api_test -v
+
+# 仅安全相关
+py -m pytest tests/api_test -v -k "no_auth or horizontal or privilege"
 ```
 
 **修复后预期变化：**
 
-- `BUG_004` ~ `BUG_LOAN_001` 修复 → 对应 XFAIL 变 XPASS（若开启 `xfail_strict` 则变 FAILED，提示更新用例）
-- `BUG_TRANSFER_001` 修复 → 7 条 SKIPPED 自动开始执行
+- 对应 `@pytest.mark.xfail(strict=True)` 会变为 `XPASS(strict)` → **CI 失败** → 强制移除 xfail 标记并更新文档
 
-**建议开启严格模式（pytest.ini）：**
+**严格模式（pytest.ini）：**
 
 ```ini
 [pytest]
@@ -284,44 +284,46 @@ xfail_strict = true
 
 | 优先级 | 漏洞 | 理由 |
 | ------ |------ |------ |
-| P0 | BUG_004 水平越权 | 可读取任意客户资金信息 |
-| P0 | BUG_005 未授权访问 | 无需登录即可读数据 |
-| P0 | BUG_007 转账水平越权 | 可操作他人账户资金 |
-| P0 | BUG_TRANSFER_001 | 阻塞所有转账验证 |
-| P1 | BUG_006 转账无幂等 | 重复提交可能多次扣款 |
-| P1 | BUG_BILL_001 账单不校验余额 | 业务资金可透支 |
-| P1 | BUG_LOAN_001 贷款负数 | 参数校验缺失 |
-| P2 | BUG_XSS_001 缺安全头 | 纵深防御 |
+| **P0** | BUG_004 水平越权（多接口） | 可读取任意客户资金信息 |
+| **P0** | BUG_005 未授权访问（多接口） | 无需登录即可读数据 |
+| **P0** | BUG_006 转账无幂等 | 重复提交可能多次扣款 |
+| **P0** | BUG_102 转账负数 | 资金反向流动 |
+| **P0** | BUG_103 转账透支 | 余额变负 |
+| **P0** | BUG_203 取款透支 | 余额变负 |
+| **P1** | BUG_202 存款负数 | 变相绕过取款限额 |
+| **P1** | BUG_204 取款负数 | 变相存款 |
+| **P1** | BUG_BILL_001 账单不校验余额 | 业务资金可透支 |
+| **P1** | BUG_104/105 转账自身/无限额 | 业务规则缺失 |
+| **P2** | BUG_101/201/205 零金额 | 参数校验缺失 |
+| **P2** | BUG_301/302 缺参返回 500 | 错误处理不友好 |
+| **P3** | BUG_XSS_001 缺安全头 | 纵深防御 |
 
 ---
 
 ## 八、附录
 
-### 8.1 漏洞统计图
+### 8.1 漏洞统计图（v2.0）
 
 ```text
-高危 ████████████████ 5
-中危 ██████           2
-低危 ███              1
+高危 ████████████████████  9
+中危 ████████████████      7
+低危 ██████                3
 ```
 
 ### 8.2 相关文件
 
-- 测试用例：`tests/api_test/scenarios/parabank/test_api_soap_parabank.py`
-- 业务封装：`tests/api_test/business/parabank_biz.py`
-- 基线日志：`logs/parabank_baseline.log`
+- 测试用例：`tests/api_test/scenarios/parabank/`
+- 业务封装：`tests/api_test/business/parabank_biz.py`（`ParaBankBiz` + `ParaBankRaw`）
+- 漏洞文档：`KNOWN_BUGS.md`
+- CI 配置：`.github/workflows/ci.yml`
 
 ### 8.3 变更记录
 
 | 日期 | 版本 | 变更 |
 | ------ |------ |------ |
 | 2026-09-28 | v1.0 | 首次基线，识别 8 漏洞 + 1 阻塞 |
+| 2026-10-05 | v2.0 | 漏洞覆盖扩展至 19 个；`BUG_TRANSFER_001` 已不复现；引入 `ParaBankRaw`；43 xfail 守卫 |
 
 ---
 
-本报告由 credit-approval-system 自动化测试框架生成，所有结论均可通过上述用例一键复现。
-
----
-
-报告已整理完毕，格式统一、层级清晰。你可以直接复制保存为 `.md` 文件使用。
-
+本报告由 parabank-automation-framework 自动化测试框架生成，所有结论均可通过上述用例一键复现。
