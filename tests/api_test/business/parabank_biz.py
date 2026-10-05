@@ -394,3 +394,44 @@ class ParaBankBiz:
         return self.get(
             f"/accounts/{account_id}/transactions/fromDate/{from_date}/toDate/{to_date}"
         )
+
+    
+
+# ==================== 裸客户端（异常测试专用） ====================
+
+class ParaBankRaw:
+    """ParaBank 裸客户端：无重试、无 Allure 记录。
+
+    专供异常测试使用，避免：
+    - tenacity 对 5xx 自动重试 3 次（浪费 3-15 秒/用例）
+    - 每个异常请求都被附加到 Allure 报告（报告冗余）
+    """
+
+    DEFAULT_TIMEOUT: int = 10
+
+    def __init__(
+        self,
+        base_url: str,
+        auth: tuple[str, str] | None = None,
+        timeout: int | None = None,
+    ) -> None:
+        self.base_url: str = base_url.rstrip("/")
+        self.auth: tuple[str, str] | None = auth
+        self.timeout: int = timeout or self.DEFAULT_TIMEOUT
+
+    def get(self, path: str, **kwargs: Any) -> requests.Response:
+        """GET 请求（无重试、无 Allure 记录）。"""
+        kwargs.setdefault("timeout", self.timeout)
+        kwargs.setdefault("auth", self.auth)
+        return requests.get(self.base_url + path, **kwargs)
+
+    def post_query(
+        self,
+        path: str,
+        params: dict[str, Any] | None = None,
+        **kwargs: Any,
+    ) -> requests.Response:
+        """POST 请求：参数走 query string（无重试、无 Allure 记录）。"""
+        kwargs.setdefault("timeout", self.timeout)
+        kwargs.setdefault("auth", self.auth)
+        return requests.post(self.base_url + path, params=params, **kwargs)
