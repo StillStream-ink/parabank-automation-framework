@@ -48,7 +48,7 @@ class TestTransactionQuery:
     def test_get_transactions_by_amount(self):
         biz = ParaBankBiz(BASE_URL, USER_JOHN)
         # 查一个不太可能存在的金额，验证接口可用（返回空列表也是正常）
-        resp = biz.get_transactions_by_amount(ACCOUNT_ID, 100)
+        resp = biz.get_transactions_by_amount(account_id=ACCOUNT_ID, amount=100)
         assert resp.status_code == 200
         assert "<transactions>" in resp.text
 
@@ -58,7 +58,9 @@ class TestTransactionQuery:
     @allure.title("TC_PB_TXQ_004 按月份+类型查询（All/All）")
     def test_get_transactions_by_month_type(self):
         biz = ParaBankBiz(BASE_URL, USER_JOHN)
-        resp = biz.get_transactions_by_month_type(ACCOUNT_ID, "All", "All")
+        resp = biz.get_transactions_by_month_type(
+            account_id=ACCOUNT_ID, month="All", type_="All"
+        )
         assert resp.status_code == 200
         assert "<transactions>" in resp.text
 
@@ -69,7 +71,7 @@ class TestTransactionQuery:
     def test_get_transactions_by_date_range(self):
         biz = ParaBankBiz(BASE_URL, USER_JOHN)
         resp = biz.get_transactions_by_date_range(
-            ACCOUNT_ID, "01-01-2000", "12-31-2030"
+            account_id=ACCOUNT_ID, from_date="01-01-2000", to_date="12-31-2030"
         )
         assert resp.status_code == 200
         assert "<transactions>" in resp.text

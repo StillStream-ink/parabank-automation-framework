@@ -145,7 +145,12 @@ class TestContract:
     @allure.title("TC_CT_007 贷款响应的字段结构符合契约")
     def test_loan_contract(self):
         biz = ParaBankBiz(BASE_URL, USER_JOHN)
-        resp = biz.apply_loan(CUSTOMER_ID, 1000, 100, ACCOUNT_ID)
+        resp = biz.apply_loan(
+            customer_id=CUSTOMER_ID,
+            amount=1000,
+            down_payment=100,
+            from_account_id=ACCOUNT_ID,
+        )
         assert resp.status_code == 200
         root = _parse(resp.text)
         account_id_text = root.findtext("accountId")
@@ -165,8 +170,8 @@ class TestContract:
         assert resp.status_code == 200
         root = _parse(resp.text)
         data = {
-            "accountId": int(root.find("accountId").text),
-            "amount": root.find("amount").text,
+            "accountId": int(root.findtext("accountId")) if root.findtext("accountId") else None,
+            "amount": root.findtext("amount"),
             "payeeName": root.findtext("payeeName"),
         }
         BillPayResult(**data)
