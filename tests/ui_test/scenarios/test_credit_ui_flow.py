@@ -1,8 +1,9 @@
-import pytest
 import time
-import allure
-from tests.ui_test.pages.register_page import RegisterPage
 
+import allure
+import pytest
+
+from tests.ui_test.pages.register_page import RegisterPage
 
 pytestmark = [pytest.mark.ui, pytest.mark.login]
 

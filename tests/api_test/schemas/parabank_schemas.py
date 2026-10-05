@@ -4,7 +4,6 @@
 """
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
 
 from pydantic import BaseModel
 
@@ -45,7 +44,7 @@ class LoanResponse(BaseModel):
     responseDate: datetime
     loanProviderName: str
     approved: bool
-    accountId: Optional[int] = None
+    accountId: int | None = None
 
 
 class BillPayResult(BaseModel):

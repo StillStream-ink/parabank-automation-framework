@@ -1,7 +1,7 @@
-import pytest
 import allure
-from tests.ui_test.pages.logout_page import LogoutPage
+import pytest
 
+from tests.ui_test.pages.logout_page import LogoutPage
 
 pytestmark = [pytest.mark.ui, pytest.mark.login]
 

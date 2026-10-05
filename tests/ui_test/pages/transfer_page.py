@@ -1,6 +1,7 @@
 # 修改这一行
 from tests.ui_test.pages.base_page import BasePage
 
+
 class TransferPage(BasePage):
     """转账页面"""
     # 元素定位

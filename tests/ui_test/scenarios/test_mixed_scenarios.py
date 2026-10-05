@@ -8,16 +8,17 @@ from decimal import Decimal
 import allure
 import pytest
 
-from tests.api_test.business.parabank_biz import ParaBankBiz
-from tests.ui_test.pages.overview_page import OverviewPage
-
 from config.test_constants import (
     ACC_A,
     ACC_B,
     BASE_URL,
-    CUSTOMER_ID_JOHN as CUSTOMER_ID,
     USER_JOHN,
 )
+from config.test_constants import (
+    CUSTOMER_ID_JOHN as CUSTOMER_ID,
+)
+from tests.api_test.business.parabank_biz import ParaBankBiz
+from tests.ui_test.pages.overview_page import OverviewPage
 
 
 def _api_balance(account_id):
@@ -88,7 +89,6 @@ class TestMixedScenarios:
     @allure.title("TC_MIX_003 UI 转账后，API 查询应反映余额变化")
     def test_ui_transfer_api_verify(self, logged_in_page, ui_base_url):
         with allure.step(f"1. API 记录 {ACC_A} / {ACC_B} 转账前余额"):
-            biz = ParaBankBiz(BASE_URL, USER_JOHN)
             before_a = _api_balance(ACC_A)
             before_b = _api_balance(ACC_B)
 

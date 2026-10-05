@@ -39,7 +39,7 @@ def collect_stats(results_dir: Path, dedup: bool = True) -> dict:
 
     files = list(results_dir.glob("*-result.json"))
     if not files:
-        print(f"[ERROR] 结果目录里没有 *-result.json")
+        print("[ERROR] 结果目录里没有 *-result.json")
         sys.exit(2)
 
     # 读取全部
@@ -115,7 +115,7 @@ def main():
     print("=" * 60)
 
     if pass_rate >= args.threshold:
-        print(f"  [PASS] 质量门禁通过")
+        print("  [PASS] 质量门禁通过")
         return 0
     else:
         print(f"  [FAIL] 质量门禁未通过（差 {args.threshold - pass_rate:.2f}%）")

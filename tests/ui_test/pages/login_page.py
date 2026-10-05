@@ -1,5 +1,6 @@
 from tests.ui_test.pages.base_page import BasePage
 
+
 class LoginPage(BasePage):
     """登录页面"""
     # 元素定位

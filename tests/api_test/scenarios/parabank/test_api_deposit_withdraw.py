@@ -1,10 +1,9 @@
+
 import allure
 import pytest
-import xml.etree.ElementTree as ET
 
+from config.test_constants import ACC_A, BASE_URL, USER_JOHN
 from tests.api_test.business.parabank_biz import ParaBankBiz
-
-from config.test_constants import BASE_URL, USER_JOHN, CUSTOMER_ID_JOHN, ACC_A, ACC_B
 
 ACCOUNT_ID = ACC_A
 

@@ -1,5 +1,6 @@
 
-from config.test_constants import BASE_URL, USER_JOHN, CUSTOMER_ID_JOHN, ACC_A, ACC_B
+from config.test_constants import ACC_A, ACC_B, BASE_URL, USER_JOHN
+
 """数据一致性测试  精确校验余额变化。
 
 基于 logs/balance_consistency_probe.txt 的真实行为设计。
@@ -7,11 +8,11 @@ from config.test_constants import BASE_URL, USER_JOHN, CUSTOMER_ID_JOHN, ACC_A, 
 
 报告展示：每个用例用 allure.step 拆解为可读步骤。
 """
+import xml.etree.ElementTree as ET
 from decimal import Decimal
 
 import allure
 import pytest
-import xml.etree.ElementTree as ET
 
 from tests.api_test.business.parabank_biz import ParaBankBiz
 

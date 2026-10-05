@@ -17,7 +17,6 @@ os.environ.setdefault("PYTHONIOENCODING", "utf-8")
 
 from config.env_config import get_ui_url
 
-
 # ==================== UI 基础 ====================
 
 @pytest.fixture(scope="session")

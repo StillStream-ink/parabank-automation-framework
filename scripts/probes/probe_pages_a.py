@@ -1,5 +1,6 @@
 """探测 ParaBank 未覆盖页面的真实 HTML：开户/账单支付/账户详情/登出。"""
 from pathlib import Path
+
 from playwright.sync_api import sync_playwright
 
 BASE = "http://localhost:8080/parabank"
@@ -57,10 +58,6 @@ def main():
 
         login(page)
         lines.append("登录成功")
-
-        pages = [
-            ("https://example.com", ""),   # 占位，下面替换
-        ]
 
         # 1. 开户页
         lines.extend(dump_page(page, f"{BASE}/openaccount.htm", "开户页 openaccount"))

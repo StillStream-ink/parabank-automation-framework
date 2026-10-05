@@ -1,9 +1,10 @@
-import pytest
-import allure
 import xml.etree.ElementTree as ET
 
+import allure
+import pytest
+
+from config.test_constants import BASE_URL, CUSTOMER_ID_JOHN, USER_JOHN
 from tests.api_test.business.parabank_biz import ParaBankBiz
-from config.test_constants import BASE_URL, USER_JOHN, CUSTOMER_ID_JOHN
 
 pytestmark = [pytest.mark.api, pytest.mark.parabank, pytest.mark.transfer]
 
@@ -125,7 +126,7 @@ class TestParaBankAPI:
     @allure.title("TC_PB_TX_007 快速重复提交转账")
     def test_transfer_duplicate_submit(self, biz, two_accounts):
         from_acc_id, to_acc_id = two_accounts
-        r1 = biz.transfer_funds(from_acc_id, to_acc_id, 100)
+        biz.transfer_funds(from_acc_id, to_acc_id, 100)
         r2 = biz.transfer_funds(from_acc_id, to_acc_id, 100)
         assert r2.status_code != 200
 

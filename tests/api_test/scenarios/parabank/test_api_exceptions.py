@@ -4,13 +4,11 @@
 
 说明：异常场景统一走 ParaBankRaw（无重试、无 Allure），避免 tenacity 干扰。
 """
-from config.test_constants import BASE_URL, USER_JOHN, CUSTOMER_ID_JOHN, ACC_A, ACC_B
-
-import pytest
 import allure
+import pytest
 
-from tests.api_test.business.parabank_biz import ParaBankBiz, ParaBankRaw
-
+from config.test_constants import ACC_A, BASE_URL, USER_JOHN
+from tests.api_test.business.parabank_biz import ParaBankRaw
 
 pytestmark = [pytest.mark.api, pytest.mark.parabank, pytest.mark.regression]
 

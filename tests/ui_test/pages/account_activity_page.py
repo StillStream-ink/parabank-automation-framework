@@ -1,6 +1,7 @@
 from config.test_constants import ACC_A
 from tests.ui_test.pages.base_page import BasePage
 
+
 class AccountActivityPage(BasePage):
     """ParaBank 账户详情页"""
 

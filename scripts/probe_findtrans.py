@@ -1,5 +1,6 @@
 ﻿"""探测 ParaBank 交易查询页在"有结果"/"无结果"时的真实文本。"""
 from pathlib import Path
+
 from playwright.sync_api import sync_playwright
 
 BASE = "http://localhost:8080/parabank"
@@ -26,9 +27,9 @@ def dump_after_query(page, label):
         f"\n{'='*60}",
         f"=== {label} ===",
         f"URL: {page.url}",
-        f"\n--- Body 文本（前 1500 字）---",
+        "\n--- Body 文本（前 1500 字）---",
         body[:1500],
-        f"\n--- #rightPanel HTML（前 2000 字）---",
+        "\n--- #rightPanel HTML（前 2000 字）---",
         main_html[:2000],
     ]
     return lines

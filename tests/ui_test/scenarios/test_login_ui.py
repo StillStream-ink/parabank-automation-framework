@@ -1,5 +1,6 @@
 import allure
 import pytest
+
 from tests.ui_test.pages.login_page import LoginPage
 
 pytestmark = [pytest.mark.ui, pytest.mark.login]

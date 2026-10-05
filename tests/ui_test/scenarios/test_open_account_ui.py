@@ -1,8 +1,8 @@
-from config.test_constants import ACC_A
-import pytest
 import allure
-from tests.ui_test.pages.open_account_page import OpenAccountPage
+import pytest
 
+from config.test_constants import ACC_A
+from tests.ui_test.pages.open_account_page import OpenAccountPage
 
 pytestmark = [pytest.mark.ui, pytest.mark.regression]
 

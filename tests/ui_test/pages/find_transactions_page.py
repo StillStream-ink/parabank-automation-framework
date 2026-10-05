@@ -1,5 +1,6 @@
-from tests.ui_test.pages.base_page import BasePage
 import re
+
+from tests.ui_test.pages.base_page import BasePage
 
 
 class FindTransactionsPage(BasePage):

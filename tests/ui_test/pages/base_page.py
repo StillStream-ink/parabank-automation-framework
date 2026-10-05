@@ -1,4 +1,3 @@
-from playwright.sync_api import Page
 
 class BasePage:
     def __init__(self, page, ui_base_url):

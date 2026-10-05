@@ -1,17 +1,15 @@
 """ParaBank 响应契约校验  用 pydantic 校验字段名/类型/必填。"""
-from config.test_constants import (
-    BASE_URL,
-    USER_JOHN,
-    CUSTOMER_ID_JOHN,
-    ACC_A,
-    ACC_B,
-)
-
-import pytest
 import xml.etree.ElementTree as ET
 
 import allure
+import pytest
 
+from config.test_constants import (
+    ACC_A,
+    BASE_URL,
+    CUSTOMER_ID_JOHN,
+    USER_JOHN,
+)
 from tests.api_test.business.parabank_biz import ParaBankBiz
 from tests.api_test.schemas.parabank_schemas import (
     Account,

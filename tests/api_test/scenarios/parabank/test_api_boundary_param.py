@@ -1,5 +1,6 @@
 
-from config.test_constants import BASE_URL, USER_JOHN, CUSTOMER_ID_JOHN, ACC_A, ACC_B
+from config.test_constants import ACC_A, BASE_URL, CUSTOMER_ID_JOHN, USER_JOHN
+
 """转账/存款/取款 边界值参数化用例（精简版）。
 
 精简原则：每个参数值代表一个独立风险类别。
@@ -7,11 +8,13 @@ from config.test_constants import BASE_URL, USER_JOHN, CUSTOMER_ID_JOHN, ACC_A, 
 - 边界值：0（零值缺失）
 - 异常值：大额（透支）+ 负数（反向操作）
 """
-import pytest
-import allure
 import xml.etree.ElementTree as ET
 
+import allure
+import pytest
+
 from tests.api_test.business.parabank_biz import ParaBankBiz
+
 
 def _two_accounts(biz):
     resp = biz.get_customer_account_list(CUSTOMER_ID_JOHN)

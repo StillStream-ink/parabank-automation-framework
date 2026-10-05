@@ -1,7 +1,7 @@
-﻿from config.test_constants import ACC_A
+﻿import allure
 import pytest
-import allure
 
+from config.test_constants import ACC_A
 from tests.ui_test.pages.find_transactions_page import FindTransactionsPage
 
 pytestmark = [pytest.mark.ui, pytest.mark.transaction]

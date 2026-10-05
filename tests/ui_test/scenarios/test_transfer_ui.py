@@ -1,7 +1,7 @@
 import allure
 import pytest
-from tests.ui_test.pages.transfer_page import TransferPage
 
+from tests.ui_test.pages.transfer_page import TransferPage
 
 pytestmark = [pytest.mark.ui, pytest.mark.transfer]
 

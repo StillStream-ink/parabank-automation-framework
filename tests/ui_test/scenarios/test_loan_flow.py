@@ -1,10 +1,9 @@
-from config.test_constants import ACC_A
-import pytest
 import allure
+import pytest
 
-from tests.ui_test.pages.loan_page import LoanPage
+from config.test_constants import ACC_A
 from tests.ui_test.pages.loan_list_page import LoanListPage
-
+from tests.ui_test.pages.loan_page import LoanPage
 
 pytestmark = [pytest.mark.ui, pytest.mark.loan]
 

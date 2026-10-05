@@ -1,5 +1,5 @@
 from decimal import Decimal
-import re
+
 from tests.ui_test.pages.base_page import BasePage
 
 

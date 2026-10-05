@@ -7,7 +7,6 @@
 """
 from __future__ import annotations
 
-import json
 from typing import Any
 
 import allure
@@ -19,7 +18,6 @@ from tenacity import (
     stop_after_attempt,
     wait_exponential,
 )
-
 
 # 金额类型：支持数字或字符串（SQL 注入测试会传 str）
 Amount = int | float | str
@@ -395,7 +393,7 @@ class ParaBankBiz:
             f"/accounts/{account_id}/transactions/fromDate/{from_date}/toDate/{to_date}"
         )
 
-    
+
 
 # ==================== 裸客户端（异常测试专用） ====================
 
