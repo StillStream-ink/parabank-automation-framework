@@ -6,13 +6,11 @@ on:
   pull_request:
     branches: [main]
 
-# 官方 Pages 部署要求的权限
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# 避免并发部署冲突
 concurrency:
   group: "pages"
   cancel-in-progress: false
@@ -20,7 +18,7 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-22.04
-    timeout-minutes: 30
+    timeout-minutes: 40
 
     steps:
       - name: Checkout
@@ -93,10 +91,18 @@ jobs:
       - name: Reset test data
         run: python scripts/reset_parabank.py --quiet
 
-      - name: Run tests
+      # ==================== API 测试 ====================
+      - name: Run API tests
         env:
           HEADLESS: "1"
-        run: pytest tests -q --alluredir=allure-results
+        run: pytest tests/api_test -q --alluredir=allure-results
+
+      # ==================== UI 测试 ====================
+      - name: Run UI tests (headless)
+        env:
+          HEADLESS: "1"
+          CI: "true"
+        run: pytest tests/ui_test -q --alluredir=allure-results
 
       - name: Generate Allure report
         if: always()
@@ -107,6 +113,15 @@ jobs:
             mkdir -p allure-report
             echo "<h1>No test results</h1>" > allure-report/index.html
           fi
+
+      - name: Upload Playwright traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: test-results/playwright/
+          retention-days: 14
+          if-no-files-found: ignore
 
       - name: Setup Pages
         if: always()
